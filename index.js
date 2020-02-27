@@ -4,6 +4,7 @@
 const fs = require("fs");
 const { watch } = require("chokidar");
 const { stitch } = require("./utils");
+const open = require("open");
 
 require("yargs")
     .command("build [glob] [output]", "Stitch together an OpenAPI specification", (builder) => {
