@@ -1,6 +1,6 @@
 {
   "name": "openapi-stitcher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Stitch together an OpenAPI specification file from multiple files.",
   "main": "index.js",
   "bin": "index.js",
