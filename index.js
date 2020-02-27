@@ -3,7 +3,7 @@
 
 const fs = require("fs");
 const { watch } = require("chokidar");
-const { stitch } = require("./utils");
+const { stitch, wantsJson } = require("./utils");
 const open = require("open");
 
 require("yargs")
@@ -11,14 +11,16 @@ require("yargs")
         builder
             .positional("glob", {
                 describe: "Source files to build spec from",
-                default: "spec/**/*.{yaml,yml}"
+                default: "spec/**/*.{yaml,yml,json}"
             })
             .positional("output", {
                 describe: "Specification file to output",
                 default: "openapi.yaml",
             });
     }, (args) => {
-        fs.writeFileSync(args.output, stitch(args.glob));
+        const isJson = wantsJson(args.output);
+        const spec = stitch(args.glob, isJson);
+        fs.writeFileSync(args.output, spec);
     })
     .command("watch [glob] [output]", "Watch for changes and rebuild the specification", (builder) => {
         builder
@@ -31,8 +33,10 @@ require("yargs")
                 default: "openapi.yaml",
             });
     }, (args) => {
+        const isJson = wantsJson(args.output);
         watch(args.glob).on("all", () => {
-            fs.writeFileSync(args.output, stitch(args.glob));
+            const spec = stitch(args.glob, isJson);
+            fs.writeFileSync(args.output, spec);
         });
     })
     .command("serve [spec] [port]", "Serve OpenAPI specification via SwaggerUI", (builder) => {
@@ -57,11 +61,12 @@ require("yargs")
             });
     }, (args) => {
         require("./serve")(args.spec, args.watch).listen(args.port);
+        const url = `http://localhost:${args.port}`;
 
         if (args.open) {
-            open(`http://localhost:${args.port}`);
+            open(url);
         }
 
-        console.log(`Listening on http://localhost:${args.port}`);
+        console.log(`Listening on ${url}`);
     })
     .argv;
