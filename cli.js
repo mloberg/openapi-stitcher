@@ -16,25 +16,23 @@ require("yargs")
             .positional("output", {
                 describe: "Specification file to output",
                 default: "openapi.yaml",
+            })
+            .option("watch", {
+                alias: "w",
+                describe: "Watch for changes to source files",
+                boolean: true,
+                default: false,
             });
     }, (args) => {
         const isJson = wantsJson(args.output);
         const spec = stitch(args.glob, isJson);
         fs.writeFileSync(args.output, spec);
-    })
-    .command("watch [glob] [output]", "Watch for changes and rebuild the specification", (builder) => {
-        builder
-            .positional("glob", {
-                describe: "Source files to build spec from",
-                default: "spec/**/*.{yaml,yml}"
-            })
-            .positional("output", {
-                describe: "Specification file to output",
-                default: "openapi.yaml",
-            });
-    }, (args) => {
-        const isJson = wantsJson(args.output);
-        watch(args.glob).on("all", () => {
+
+        if (!args.watch) {
+            return;
+        }
+
+        watch(args.glob, { ignoreInitial: true }).on("all", () => {
             const spec = stitch(args.glob, isJson);
             fs.writeFileSync(args.output, spec);
         });
@@ -50,18 +48,22 @@ require("yargs")
                 default: 3000,
             })
             .option("open", {
+                alias: "o",
                 describe: "Open default browser",
                 boolean: true,
                 default: false,
             })
             .option("watch", {
+                alias: "w",
                 describe: "Files to watch and rebuild",
                 boolean: true,
                 default: false,
             });
     }, (args) => {
-        require("./serve")(args.spec, args.watch).listen(args.port);
+        const server = require("./serve")(args.spec, args.watch);
         const url = `http://localhost:${args.port}`;
+        
+        server.listen(args.port);
 
         if (args.open) {
             open(url);
